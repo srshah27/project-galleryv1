@@ -1,77 +1,219 @@
-"use client";
+'use client'
 
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Input } from '@/components/ui/input'
+import Link from 'next/link'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
-const navItems = [
-  {
-    path: "/",
-    name: "Home",
-  },
-  {
-    path: "/now",
-    name: "Now",
-  },
-  {
-    path: "/guestbook",
-    name: "Guestbook",
-  },
-  {
-    path: "/writing",
-    name: "Writing",
-  },
-];
+interface NavProps {
+  title: string
+  url: string
+}
 
-export default function NavBar() {
-  let pathname = usePathname() || "/";
+export default function Navbar() {
+  const links = []
 
-  if (pathname.includes("/writing/")) {
-    pathname = "/writing";
+  const [mobileNav, setMobileNav] = useState(false)
+
+  useEffect(() => {
+    let lastScrollTop = 0
+    let navbar = document.getElementById('nav')
+    window.addEventListener('scroll', () => {
+      let scrollTop = window.scrollY || document.documentElement.scrollTop
+      if (scrollTop > lastScrollTop) {
+        if (navbar) (navbar as HTMLFormElement).style.top = '-100px'
+      } else {
+        if (navbar) (navbar as HTMLFormElement).style.top = '0'
+      }
+      lastScrollTop = scrollTop
+    })
+  }, [])
+
+  useEffect(() => {
+    let navbar = document.getElementById('nav')
+    if (navbar) (navbar as HTMLFormElement).style.top = '0px'
+    setTimeout(() => {
+      if (navbar) (navbar as HTMLFormElement).style.top = '0'
+    }, 3000)
+  }, [])
+
+  const HorizontalNavList = ({ title, url }: NavProps) => {
+    return (
+      <li className='font-supreme px-4 cursor-pointer uppercase font-medium text-sm text-stone-400 tracking-wide hover:scale-105 duration-200'>
+        <Link href={url}>{title}</Link>
+      </li>
+    )
+  }
+  const VerticalNavList = ({ title, url }: NavProps) => {
+    return (
+      <motion.li
+        className='uppercase py-6 text-4xl cursor-pointer'
+        variants={{
+          open: {
+            y: 0,
+            opacity: 1
+          },
+          closed: {
+            y: '45%',
+            opacity: 0
+          }
+        }}
+      >
+        <Link href={url}>{title}</Link>
+      </motion.li>
+    )
   }
 
-  const [hoveredPath, setHoveredPath] = useState(pathname);
+  const MobileNavButton = () => {
+    return (
+      <div
+        onClick={() => {
+          setMobileNav(!mobileNav)
+        }}
+        className='cursor-pointer md:hidden text-gray-500 pr-4 z-10'
+      >
+        <svg
+          width='48'
+          height='48'
+          viewBox='0 0 32 32'
+          fill='none'
+          xmlns='http://www.w3.org/2000/svg'
+        >
+          <motion.rect
+            animate={mobileNav ? 'open' : 'closed'}
+            variants={topVariants}
+            transition={{ duration: 0.7 }}
+            x='6'
+            y='9'
+            width='20'
+            height='2'
+            rx='1'
+            fill='currentColor'
+            key={'top'}
+          />
+          <motion.rect
+            animate={mobileNav ? 'open' : 'closed'}
+            variants={centerVariants}
+            transition={{ duration: 0.4 }}
+            x='6'
+            y='15'
+            width='20'
+            height='2'
+            rx='1'
+            key={'middle'}
+            fill='currentColor'
+          />
+          <motion.rect
+            animate={mobileNav ? 'open' : 'closed'}
+            variants={bottomVariants}
+            transition={{ duration: 0.4 }}
+            x='6'
+            y='21'
+            width='20'
+            height='2'
+            rx='1'
+            key={'bottom'}
+            fill='currentColor'
+          />
+        </svg>
+      </div>
+    )
+  }
+
+  const VerticalNavAnimate = () => {
+    return (
+      <AnimatePresence>
+        {mobileNav && (
+          <motion.div
+            variants={{
+              open: {
+                y: '0%',
+                transition: {
+                  when: 'beforeChildren',
+                  duration: 0.5
+                }
+              },
+              closed: {
+                y: '-100%',
+                transition: {
+                  when: 'afterChildren',
+                  duration: 0.5
+                }
+              }
+            }}
+            initial='closed'
+            animate={'open'}
+            exit={'closed'}
+            key={'animate'}
+            className='flex flex-col justify-center items-center fixed top-0 left-0 w-screen h-3/4 bg-gradient-to-b from-black to-stone-900 opacity-90'
+          >
+            <ul className='text-center'>
+              {links.map((link, index) => {
+                return (
+                  <VerticalNavList
+                    title={link.title}
+                    url={link.to + link.title}
+                    key={index}
+                  />
+                )
+              })}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    )
+  }
+
+  const topVariants = {
+    open: { rotate: 45, y: 7, originX: '16px', originY: '10px' },
+    closed: { rotate: 0, y: 0, originX: 0, originY: 0 }
+  }
+
+  const centerVariants = {
+    open: { opacity: 0 },
+    closed: { opacity: 1 }
+  }
+
+  const bottomVariants = {
+    open: { rotate: -45, y: -5, originX: '16px', originY: '22px' },
+    closed: { rotate: 0, y: 0, originX: 0, originY: 0 }
+  }
 
   return (
-    <div className="border border-stone-800/90 p-[0.4rem] rounded-lg mb-12 sticky top-4 z-[100] bg-stone-900/80 backdrop-blur-md">
-      <nav className="flex gap-2 relative justifyw-full z-[100]  rounded-lg justify-center">
-        {navItems.map((item, index) => {
-          const isActive = item.path === pathname;
-          
-          return (
-            <Link
-              key={item.path}
-              className={`px-4 py-2 rounded-md text-sm lg:text-base relative no-underline duration-300 ease-in ${
-                isActive ? "text-zinc-100" : "text-zinc-400"
-              }`}
-              data-active={isActive}
-              href={item.path}
-              onMouseOver={() => setHoveredPath(item.path)}
-              onMouseLeave={() => setHoveredPath(pathname)}
-            >
-              <span>{item.name}</span>
-              {item.path === hoveredPath && (
-                <motion.div
-                  className="absolute bottom-0 left-0 h-full bg-stone-800/80 rounded-md -z-10"
-                  layoutId="navbar"
-                  aria-hidden="true"
-                  style={{
-                    width: "100%",
-                  }}
-                  transition={{
-                    type: "spring",
-                    bounce: 0.25,
-                    stiffness: 130,
-                    damping: 9,
-                    duration: 0.3,
-                  }}
-                />
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-    </div>
-  );
+    <nav id='nav' className='fixed w-full duration-700 z-50'>
+      <div className='flex items-center justify-between w-full h-20 bg-white bg-blue-400 text-stone-950 px-8'>
+        <div className='ml-2'>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            width='24'
+            height='24'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            stroke-width='2'
+            stroke-linecap='round'
+            stroke-linejoin='round'
+            className='lucide lucide-presentation'
+          >
+            <path d='M2 3h20' />
+            <path d='M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3' />
+            <path d='m7 21 5-5 5 5' />
+          </svg>
+        </div>
+        <div className='flex w-[90%]'>
+          <VerticalNavAnimate />
+          <MobileNavButton />
+          <Input
+            placeholder='search'
+            className='bg-[#e9e9e9] rounded-md h-12 w-3/4 px-4 py-2 text-sm font-medium text-stone-950 focus:outline-none focus:ring-2 focus:ring-stone-900 focus:border-transparent'
+          />
+        </div>
+        <Avatar>
+          <AvatarImage src='https://github.com/shadcn.png' />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+      </div>
+    </nav>
+  )
 }
